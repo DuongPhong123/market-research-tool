@@ -15,6 +15,8 @@ _TRENDING_KEYWORDS = [
     "son moi", "kem chong nang", "serum", "nuoc hoa hong",
     "quan ao nu", "giay dep", "tui xach", "phu kien toc",
     "do gia dung", "thuc pham chuc nang",
+    "vay dam", "blazer nu", "quan jean nu", "ao thun", "skincare",
+    "cushion phan nen", "mat na duong da", "dau goi dau", "sua rua mat", "toner",
 ]
 
 # Demo products for when Shopee API is blocked — realistic Vietnamese market data
@@ -202,21 +204,35 @@ class ShopeeAffiliateScraper:
 
     async def search_products(self, keyword: str, limit: int = 30) -> list[dict]:
         url = f"{self.SHOP_URL}/search/search_items"
-        params = {
-            "by": "relevancy", "keyword": keyword, "limit": limit,
-            "newest": 0, "order": "desc",
-            "page_type": "search", "scenario": "PAGE_GLOBAL_SEARCH", "version": 2,
-        }
         headers = self._browser_headers(f"https://shopee.vn/search?keyword={keyword}")
+        page_size = 30
+        max_pages = 3 if limit > 30 else 1
+        results: list[dict] = []
         try:
             async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
-                resp = await client.get(url, params=params, headers=headers)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    items = data.get("items") or []
-                    if items:
-                        return [self._normalize_search_item(i) for i in items if i]
-                logger.warning(f"Shopee search HTTP {resp.status_code} for '{keyword}'")
+                for page in range(max_pages):
+                    newest = page * page_size
+                    params = {
+                        "by": "relevancy", "keyword": keyword, "limit": page_size,
+                        "newest": newest, "order": "desc",
+                        "page_type": "search", "scenario": "PAGE_GLOBAL_SEARCH", "version": 2,
+                    }
+                    resp = await client.get(url, params=params, headers=headers)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        items = data.get("items") or []
+                        results.extend([self._normalize_search_item(i) for i in items if i])
+                        if len(items) < page_size:
+                            break  # no more pages
+                        if len(results) >= limit:
+                            break
+                        if page < max_pages - 1:
+                            await asyncio.sleep(0.3)
+                    else:
+                        logger.warning(f"Shopee search HTTP {resp.status_code} for '{keyword}' page {page+1}")
+                        break
+            if results:
+                return results[:limit]
         except Exception as e:
             logger.warning(f"Shopee search error for '{keyword}': {e}")
 

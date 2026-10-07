@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database import init_db
 from app.routers import products, ads, trends, fashion
+from app.routers import tiktok as tiktok_router
 from app.scheduler import setup_scheduler, scheduler
 
 logging.basicConfig(
@@ -32,7 +33,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Market Research Tool",
     description="Cong cu nghien cuu thi truong Shopee + Facebook + Instagram — Thoi trang nu 22-35",
-    version="1.1.0",
+    version="1.2.0",
     lifespan=lifespan,
 )
 
@@ -48,11 +49,12 @@ app.include_router(products.router)
 app.include_router(ads.router)
 app.include_router(trends.router)
 app.include_router(fashion.router)
+app.include_router(tiktok_router.router)
 
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok", "version": "1.1.0"}
+    return {"status": "ok", "version": "1.2.0"}
 
 
 @app.get("/api/status")

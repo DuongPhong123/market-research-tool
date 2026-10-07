@@ -489,10 +489,13 @@ select.sel-ui:focus { border-color: var(--accent); }
     <span class="icon">🛒</span> Shopee
   </div>
   <div class="nav-item" onclick="showPage('facebook')" data-page="facebook">
-    <span class="icon">📘</span> Facebook Ads
+    <span class="icon">📘</span> Facebook Keywords
   </div>
   <div class="nav-item" onclick="showPage('instagram')" data-page="instagram">
     <span class="icon">📸</span> Instagram
+  </div>
+  <div class="nav-item" onclick="showPage('tiktok')" data-page="tiktok">
+    <span class="icon">🎵</span> TikTok Ads
   </div>
   <div class="nav-section">Phân tích</div>
   <div class="nav-item" onclick="showPage('comments')" data-page="comments">
@@ -568,7 +571,7 @@ select.sel-ui:focus { border-color: var(--accent); }
 
   <!-- FACEBOOK -->
   <div id="page-facebook" style="display:none">
-    <div class="page-header"><div><div class="page-title">📘 Facebook Ads Library</div><div class="page-sub">Theo dõi quảng cáo đối thủ đang chạy</div></div></div>
+    <div class="page-header"><div><div class="page-title">📘 Facebook Keywords</div><div class="page-sub">Từ khóa được nhắc đến nhiều nhất trong quảng cáo Facebook</div></div></div>
     <!-- TOKEN PANEL -->
     <div class="fb-token-panel">
       <div class="fbt-header" onclick="toggleFbToken()">
@@ -589,13 +592,24 @@ select.sel-ui:focus { border-color: var(--accent); }
     <div class="search-row">
       <div class="search-input-wrap"><span class="ico">🔍</span><input class="search-input" id="fbKeyword" placeholder="Từ khóa sản phẩm: kem dưỡng, son môi..." onkeydown="if(event.key==='Enter')searchFbAds()"></div>
       <select id="fbCountry" class="sel-ui"><option value="VN">🇻🇳 Việt Nam</option><option value="TH">🇹🇭 Thái Lan</option><option value="SG">🇸🇬 Singapore</option></select>
-      <button class="btn btn-primary" onclick="searchFbAds()" id="fbSearchBtn">Tìm quảng cáo</button>
+      <button class="btn btn-primary" onclick="searchFbKeywords()" id="fbSearchBtn">Tìm từ khóa</button>
     </div>
     <div class="tabs" id="fbTabs">
-      <button class="tab-btn active" onclick="switchFbTab('ads')">Danh sách Ads</button>
+      <button class="tab-btn active" onclick="switchFbTab('keywords')">Từ khóa nổi bật</button>
+      <button class="tab-btn" onclick="switchFbTab('ads')">Danh sách Ads</button>
       <button class="tab-btn" onclick="switchFbTab('comments')">Phân tích Comments</button>
     </div>
-    <div class="tab-panel active" id="fb-tab-ads">
+    <div class="tab-panel active" id="fb-tab-keywords">
+      <div class="table-wrap" style="margin-top:16px">
+        <div class="table-head"><span class="table-head-title">🔥 Từ khóa được nhắc nhiều nhất</span><span class="table-count" id="fbKwCount">0</span></div>
+        <div id="fbKwCloud" style="display:flex;flex-wrap:wrap;gap:8px;padding:16px"></div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Từ khóa</th><th>Số lần nhắc</th><th>% xuất hiện</th><th>Loại</th></tr></thead>
+          <tbody id="fbKwTable"><tr><td colspan="4"><div class="empty"><div class="empty-icon">📘</div><div class="empty-title">Nhập từ khóa để phân tích</div></div></td></tr></tbody>
+        </div>
+      </div>
+    </div>
+    <div class="tab-panel" id="fb-tab-ads">
       <div class="table-wrap" style="margin-top:16px">
         <div class="table-head"><span class="table-head-title">Quảng cáo đang chạy</span><span class="table-count" id="fbAdCount">0</span></div>
         <div style="overflow-x:auto"><table>
@@ -641,6 +655,31 @@ select.sel-ui:focus { border-color: var(--accent); }
         <thead><tr><th>Từ khóa</th><th>Tần suất</th><th>Shopee</th><th>Facebook</th><th>Instagram</th><th>Velocity</th><th>Score</th></tr></thead>
         <tbody id="kwTable"><tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
       </table></div>
+    </div>
+  </div>
+
+  <!-- TIKTOK -->
+  <div id="page-tiktok" style="display:none">
+    <div class="page-header"><div><div class="page-title">🎵 TikTok Ads</div><div class="page-sub">Quảng cáo & từ khóa trending TikTok Việt Nam</div></div></div>
+    <div class="search-row">
+      <div class="search-input-wrap"><span class="ico">🔍</span><input class="search-input" id="ttKeyword" placeholder="Từ khóa: son môi, váy đầm, skincare..." onkeydown="if(event.key==='Enter')searchTikTok()"></div>
+      <select id="ttCountry" class="sel-ui"><option value="VN">🇻🇳 Việt Nam</option><option value="TH">🇹🇭 Thái Lan</option><option value="SG">🇸🇬 Singapore</option></select>
+      <button class="btn btn-primary" onclick="searchTikTok()" id="ttSearchBtn">Tìm TikTok Ads</button>
+    </div>
+    <div style="margin-top:16px">
+      <div class="table-wrap">
+        <div class="table-head"><span class="table-head-title">🔥 TikTok Trending Ads</span><span class="table-count" id="ttAdCount">0</span></div>
+        <div style="overflow-x:auto"><table>
+          <thead><tr><th>Thương hiệu</th><th>Nội dung quảng cáo</th><th>❤️ Likes</th><th>💬 Comments</th><th>↗️ Shares</th><th>Ngành</th><th>Score</th></tr></thead>
+          <tbody id="ttAdsTable"><tr><td colspan="7"><div class="empty"><div class="empty-icon">🎵</div><div class="empty-title">Nhập từ khóa để tìm TikTok Ads</div></div></td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+    <div style="margin-top:16px">
+      <div class="table-wrap">
+        <div class="table-head"><span class="table-head-title">📈 Google Trends Việt Nam hôm nay</span><span class="table-count" id="gtCount">0</span></div>
+        <div id="gtList" style="display:flex;flex-wrap:wrap;gap:8px;padding:16px"><div class="empty" style="width:100%"><div class="empty-icon">📈</div><div class="empty-title">Đang tải...</div></div></div>
+      </div>
     </div>
   </div>
 
@@ -820,6 +859,7 @@ function showPage(page) {
   if (page === 'keywords') loadKeywords();
   if (page === 'settings') loadSettings();
   if (page === 'comments') loadCommentsAnalysis();
+  if (page === 'tiktok') loadGoogleTrends();
   if (page === 'fashion') loadFashionTrending();
 }
 
@@ -954,7 +994,7 @@ function renderShopeeTable(products) {
   tbody.innerHTML = products.map(p => `<tr><td><div class="product-name-cell">${p.image_url?`<img class="product-thumb" src="${p.image_url}" onerror="this.style.display='none'">`:'<div class="product-thumb"></div>'}<div><div class="product-name" title="${p.name||''}">${p.name||'—'}</div><div class="product-shop">${p.shop_name||''}</div></div></div></td><td class="price">${formatMoney(p.price_min||0)}</td><td class="mono">${(p.sold||0).toLocaleString()}</td><td class="${(p.sold_delta||0)>0?'delta-up':'delta-neutral'}">${p.sold_delta>0?'↑ '+p.sold_delta.toLocaleString():'—'}</td><td>⭐ ${(p.rating||0).toFixed(1)}</td><td class="commission">${p.commission_rate?p.commission_rate+'%':'—'}</td><td>${scoreBadge(p.trending_score)}</td><td>${p.affiliate_url||p.product_url?`<a class="aff-link" href="${p.affiliate_url||p.product_url}" target="_blank">Link ↗</a>`:'—'}</td></tr>`).join('');
 }
 
-async function searchFbAds() {
+async function searchFbKeywords() {
   const kw = document.getElementById('fbKeyword').value.trim();
   if (!kw) { showToast('Nhap tu khoa!','info'); return; }
   const country = document.getElementById('fbCountry').value;
@@ -965,20 +1005,22 @@ async function searchFbAds() {
     const _fbt = getFbToken(); const _fbtParam = _fbt ? `&fb_token=${encodeURIComponent(_fbt)}` : '';
     const r = await fetch(`${API}/api/ads/facebook/search?keyword=${encodeURIComponent(kw)}&country=${country}${_fbtParam}`);
     const data = await r.json();
-    if (data.demo) {
-      renderFbAdsTable(data.data||[], true);
-      document.getElementById('fbAdCount').textContent = (data.total||0) + ' (demo)';
-      const hint = data.error ? `API loi: ${data.error}` : 'Hien thi du lieu DEMO';
-      showToast(`${hint} — Xem huong dan o tab Cai dat de lay token that`, 'info');
-    } else if (data.error && !(data.data||[]).length) {
-      document.getElementById('fbAdsTable').innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title" style="color:var(--amber)">${data.error}</div></div></td></tr>`;
-      showToast(data.error,'error');
-    } else {
-      renderFbAdsTable(data.data||[]);
-      document.getElementById('fbAdCount').textContent = data.total||0;
-      if ((data.total||0) > 0) showToast(`Tim thay ${data.total} quang cao`,'success');
-      else showToast('Khong co ket qua — thu tu khoa khac','info');
-    }
+    const ads = data.data || [];
+    const isDemo = !!data.demo;
+    // Aggregate keywords from all ads
+    const kwFreq = {};
+    ads.forEach(ad => {
+      const allKws = (ad.keywords || []).concat(ad.product_keywords || []);
+      const words = ((ad.ad_creative_body||'') + ' ' + (ad.ad_creative_title||'')).toLowerCase()
+        .split(/[\s,!?#@.…]+/).filter(w => w.length >= 3);
+      [...allKws, ...words].forEach(w => { kwFreq[w] = (kwFreq[w]||0) + 1; });
+    });
+    const sorted = Object.entries(kwFreq).sort((a,b)=>b[1]-a[1]).slice(0,40);
+    renderFbKeywords(sorted, ads.length, isDemo);
+    renderFbAdsTable(ads, isDemo);
+    document.getElementById('fbAdCount').textContent = ads.length + (isDemo?' (demo)':'');
+    if (isDemo) showToast('Hien thi DEMO – vao Cai dat de lay FB Token that','info');
+    else showToast(`Phan tich ${ads.length} quang cao, tim ${sorted.length} tu khoa`,'success');
   } catch(e) {
     document.getElementById('fbAdsTable').innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-icon">❌</div><div class="empty-title">Loi ket noi server</div></div></td></tr>';
     showToast('Loi: '+e.message,'error');
@@ -1016,9 +1058,96 @@ function renderCommentAnalysis(data, targetId) {
 }
 
 function switchFbTab(tab) {
-  document.querySelectorAll('#fbTabs .tab-btn').forEach((btn,i)=>btn.classList.toggle('active',(i===0)===(tab==='ads')));
-  document.getElementById('fb-tab-ads').classList.toggle('active',tab==='ads');
-  document.getElementById('fb-tab-comments').classList.toggle('active',tab==='comments');
+  const tabs = ['keywords','ads','comments'];
+  document.querySelectorAll('#fbTabs .tab-btn').forEach((btn,i)=>btn.classList.toggle('active',tabs[i]===tab));
+  tabs.forEach(t => { const el = document.getElementById('fb-tab-'+t); if(el) el.classList.toggle('active',t===tab); });
+}
+
+function renderFbKeywords(sorted, adCount, isDemo) {
+  const cloud = document.getElementById('fbKwCloud');
+  const tbody = document.getElementById('fbKwTable');
+  document.getElementById('fbKwCount').textContent = sorted.length + (isDemo?' (demo)':'');
+  if (!sorted.length) {
+    cloud.innerHTML = '';
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><div class="empty-icon">📘</div><div class="empty-title">Khong co tu khoa</div></div></td></tr>';
+    return;
+  }
+  const maxF = sorted[0][1];
+  // Cloud
+  cloud.innerHTML = (isDemo?'<div style="width:100%;padding:4px 0;font-size:11px;color:var(--amber)">⚠️ DEMO DATA</div>':'') +
+    sorted.slice(0,20).map(([kw,f])=>{
+      const size = 11 + Math.round((f/maxF)*10);
+      const op = 0.5 + (f/maxF)*0.5;
+      return `<span style="font-size:${size}px;opacity:${op};background:rgba(45,156,219,0.15);border:1px solid rgba(45,156,219,0.3);border-radius:20px;padding:4px 10px;cursor:pointer;color:var(--accent)" onclick="document.getElementById('fbKeyword').value='${kw}'">${kw} <b>${f}</b></span>`;
+    }).join('');
+  // Table
+  const pct = f => adCount ? Math.round(f/adCount*100) : 0;
+  const typeGuess = kw => {
+    if (['son','kem','serum','collagen','toner','mặt nạ','vitamin'].some(t=>kw.includes(t))) return '💄 Làm đẹp';
+    if (['váy','áo','quần','blazer','linen','oversize','jeans'].some(t=>kw.includes(t))) return '👗 Thời trang';
+    if (['nồi','máy','điện','philips'].some(t=>kw.includes(t))) return '🏠 Gia dụng';
+    if (['giảm','sale','free ship','miễn ship','giá'].some(t=>kw.includes(t))) return '🏷️ Khuyến mãi';
+    return '🔑 Chung';
+  };
+  tbody.innerHTML = (isDemo?`<tr><td colspan="4" style="background:rgba(245,166,35,0.1);color:var(--amber);font-size:12px;text-align:center;padding:8px">⚠️ DU LIEU DEMO</td></tr>`:'') +
+    sorted.map(([kw,f])=>`<tr>
+      <td><b>${kw}</b></td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div style="width:${Math.round(f/maxF*80)}px;height:6px;background:var(--accent);border-radius:3px"></div>${f}</div></td>
+      <td>${pct(f)}%</td>
+      <td><span style="font-size:11px">${typeGuess(kw)}</span></td>
+    </tr>`).join('');
+}
+
+async function searchTikTok() {
+  const kw = document.getElementById('ttKeyword').value.trim();
+  const country = document.getElementById('ttCountry').value;
+  const btn = document.getElementById('ttSearchBtn');
+  btn.disabled = true; btn.textContent = 'Dang tim...';
+  document.getElementById('ttAdsTable').innerHTML = '<tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>';
+  try {
+    const r = await fetch(`${API}/api/tiktok/trending-ads?keyword=${encodeURIComponent(kw)}&country=${country}&limit=20`);
+    const data = await r.json();
+    const ads = data.data || [];
+    const isDemo = !!data.demo;
+    document.getElementById('ttAdCount').textContent = ads.length + (isDemo?' (demo)':'');
+    if (!ads.length) {
+      document.getElementById('ttAdsTable').innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-icon">🎵</div><div class="empty-title">Khong tim thay TikTok Ads</div></div></td></tr>';
+      return;
+    }
+    const demoBanner = isDemo ? `<tr><td colspan="7" style="background:rgba(245,166,35,0.12);color:var(--amber);font-size:12px;text-align:center;padding:8px">⚠️ DU LIEU DEMO — TikTok Creative Center API</td></tr>` : '';
+    document.getElementById('ttAdsTable').innerHTML = demoBanner + ads.map(a=>`<tr>
+      <td><b>${a.brand_name||''}</b></td>
+      <td style="max-width:280px;white-space:normal">${(a.ad_title||'').slice(0,100)}</td>
+      <td style="color:var(--red)">❤️ ${(a.likes||0).toLocaleString()}</td>
+      <td>💬 ${(a.comments||0).toLocaleString()}</td>
+      <td style="color:var(--accent)">↗️ ${(a.shares||0).toLocaleString()}</td>
+      <td><span style="font-size:11px">${a.industry||''}</span></td>
+      <td><span class="score-badge">${a.trending_score||0}</span></td>
+    </tr>`).join('');
+    if (isDemo) showToast('Hien thi DEMO TikTok Ads — API Creative Center dang thu','info');
+    else showToast(`Tim thay ${ads.length} TikTok Ads`,'success');
+  } catch(e) { showToast('Loi: '+e.message,'error'); }
+  finally { btn.disabled=false; btn.textContent='Tim TikTok Ads'; }
+}
+
+async function loadGoogleTrends() {
+  const listEl = document.getElementById('gtList');
+  const countEl = document.getElementById('gtCount');
+  if (!listEl) return;
+  try {
+    const r = await fetch(`${API}/api/tiktok/google-trends?geo=VN&limit=15`);
+    const data = await r.json();
+    const items = data.data || [];
+    countEl.textContent = items.length + (data.demo?' (demo)':'');
+    listEl.innerHTML = items.map((t,i)=>`
+      <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;min-width:160px">
+        <span style="font-size:18px;font-weight:700;color:var(--fg3);width:24px">${i+1}</span>
+        <div>
+          <div style="font-weight:600;font-size:13px">${t.keyword}</div>
+          <div style="font-size:11px;color:var(--fg3)">${t.traffic||''}</div>
+        </div>
+      </div>`).join('');
+  } catch(e) { listEl.innerHTML = '<div style="color:var(--fg3);padding:8px">Khong lay duoc Google Trends</div>'; }
 }
 
 async function searchIg() {

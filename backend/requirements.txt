@@ -20,3 +20,4 @@ aiohttp>=3.9
 fake-useragent==1.4.0
 tenacity==8.2.3
 rich==13.7.0
+pytrends==4.9.2
