@@ -2,6 +2,9 @@
 chcp 65001 >nul
 title Market Research Tool
 
+REM === Di chuyen ve thu muc chua bat file (fix cd path) ===
+cd /d "%~dp0"
+
 echo.
 echo  ========================================
 echo   Market Research Tool - Khoi dong local
@@ -44,7 +47,13 @@ if not exist data mkdir data
 REM === Cai dat thu vien Python ===
 echo.
 echo [INFO] Dang kiem tra va cai dat thu vien Python...
-cd backend
+cd /d "%~dp0backend"
+if errorlevel 1 (
+    echo [LOI] Khong tim thay thu muc backend!
+    echo Kiem tra: da clone du toan bo repo chua? Thu muc backend\ co ton tai khong?
+    pause
+    exit /b 1
+)
 python -m pip install -r requirements.txt -q --disable-pip-version-check
 if errorlevel 1 (
     echo [LOI] Cai dat thu vien that bai!
