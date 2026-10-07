@@ -68,9 +68,9 @@ async def get_status():
 
 
 frontend_dir = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
-if os.path.exists(frontend_dir):
-    app.mount("/static", StaticFiles(directory=os.path.join(frontend_dir, "static")), name="static")
+index_html = os.path.join(frontend_dir, "index.html")
 
+if os.path.exists(index_html):
     @app.get("/", include_in_schema=False)
     async def serve_frontend():
-        return FileResponse(os.path.join(frontend_dir, "index.html"))
+        return FileResponse(index_html)
