@@ -10,6 +10,13 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
+# Popular Vietnamese product keywords used for public-API trending sweep
+_TRENDING_KEYWORDS = [
+    "son moi", "kem chong nang", "serum", "nuoc hoa hong",
+    "quan ao nu", "giay dep", "tui xach", "phu kien toc",
+    "do gia dung", "thuc pham chuc nang",
+]
+
 
 class ShopeeAffiliateScraper:
     BASE_URL = "https://open-api.affiliate.shopee.vn/graphql"
@@ -18,6 +25,14 @@ class ShopeeAffiliateScraper:
     def __init__(self):
         self.app_id = settings.shopee_app_id
         self.secret_key = settings.shopee_secret_key
+
+    def _has_affiliate_credentials(self) -> bool:
+        """Return True only when real credentials are configured."""
+        placeholder = ("your_app_id_here", "your_secret_key_here", "", None)
+        return (
+            str(self.app_id or "") not in placeholder
+            and str(self.secret_key or "") not in placeholder
+        )
 
     def _sign(self, payload: str) -> str:
         return hmac.new(
@@ -36,6 +51,11 @@ class ShopeeAffiliateScraper:
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
     async def get_trending_products(self, keyword: str = "", category_id: int = 0, limit: int = 50, sort_type: int = 2) -> list[dict]:
+        # Use public API when affiliate credentials are not yet approved
+        if not self._has_affiliate_credentials():
+            logger.info("Affiliate key not configured — using public Shopee API for trending")
+            return await self.get_trending_public(keyword=keyword, limit=limit)
+
         query = """
         query getProductOffers($keyword: String, $categoryId: Int, $limit: Int, $sortType: Int) {
           productOfferV2(
@@ -58,13 +78,60 @@ class ShopeeAffiliateScraper:
         payload_str = json.dumps({"query": query, "variables": variables}, separators=(",", ":"))
         headers = self._build_headers(payload_str)
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(self.BASE_URL, content=payload_str, headers=headers)
-            resp.raise_for_status()
-            data = resp.json()
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(self.BASE_URL, content=payload_str, headers=headers)
+                resp.raise_for_status()
+                data = resp.json()
+            nodes = data.get("data", {}).get("productOfferV2", {}).get("nodes", [])
+            if nodes:
+                return [self._normalize_product(n) for n in nodes]
+        except Exception as e:
+            logger.warning(f"Affiliate API error, falling back to public: {e}")
 
-        nodes = data.get("data", {}).get("productOfferV2", {}).get("nodes", [])
-        return [self._normalize_product(n) for n in nodes]
+        return await self.get_trending_public(keyword=keyword, limit=limit)
+
+    async def get_trending_public(self, keyword: str = "", limit: int = 50) -> list[dict]:
+        """Public Shopee search sorted by sales — no affiliate credentials needed.
+
+        When keyword is empty, sweeps across popular product categories to
+        build a broader trending list (deduped by item_id).
+        """
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", "Referer": "https://shopee.vn/"}
+
+        async def _fetch(kw: str, n: int) -> list[dict]:
+            url = f"{self.SHOP_URL}/search/search_items"
+            params = {
+                "by": "sales", "keyword": kw, "limit": min(n, 50),
+                "newest": 0, "order": "desc",
+                "page_type": "search", "scenario": "PAGE_GLOBAL_SEARCH", "version": 2,
+            }
+            try:
+                async with httpx.AsyncClient(timeout=20.0) as client:
+                    resp = await client.get(url, params=params, headers=headers)
+                    if resp.status_code == 200:
+                        return [self._normalize_search_item(i) for i in resp.json().get("items", []) if i]
+            except Exception as e:
+                logger.debug(f"Public search failed for '{kw}': {e}")
+            return []
+
+        if keyword:
+            return await _fetch(keyword, limit)
+
+        # No keyword: sweep popular categories, collect up to `limit` unique products
+        seen: set[str] = set()
+        results: list[dict] = []
+        per_kw = max(10, limit // len(_TRENDING_KEYWORDS))
+        for kw in _TRENDING_KEYWORDS:
+            batch = await _fetch(kw, per_kw)
+            for item in batch:
+                if item["item_id"] and item["item_id"] not in seen:
+                    seen.add(item["item_id"])
+                    results.append(item)
+                    if len(results) >= limit:
+                        return results
+            await asyncio.sleep(0.3)   # polite crawl delay
+        return results
 
     async def get_product_reviews(self, item_id: str, shop_id: str, limit: int = 50, offset: int = 0) -> list[dict]:
         url = f"{self.SHOP_URL}/item/get_ratings"
@@ -79,7 +146,11 @@ class ShopeeAffiliateScraper:
 
     async def search_products(self, keyword: str, limit: int = 30) -> list[dict]:
         url = f"{self.SHOP_URL}/search/search_items"
-        params = {"by": "relevancy", "keyword": keyword, "limit": limit, "newest": 0, "order": "desc", "page_type": "search", "scenario": "PAGE_GLOBAL_SEARCH", "version": 2}
+        params = {
+            "by": "relevancy", "keyword": keyword, "limit": limit,
+            "newest": 0, "order": "desc",
+            "page_type": "search", "scenario": "PAGE_GLOBAL_SEARCH", "version": 2,
+        }
         headers = {"User-Agent": "Mozilla/5.0", "Referer": f"https://shopee.vn/search?keyword={keyword}"}
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.get(url, params=params, headers=headers)
