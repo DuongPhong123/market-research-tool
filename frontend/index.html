@@ -1056,12 +1056,14 @@ function renderIgTable(posts, isDemo=false) {
 async function loadKeywords() {
   document.getElementById('kwTable').innerHTML = '<tr><td colspan="7"><div class="loading"><div class="spinner"></div></div></td></tr>';
   try {
+    // Auto-update keywords from DB before reading
+    await fetch(`${API}/api/trends/update-keywords`, {method:'POST'});
     const r = await fetch(`${API}/api/trends/keywords?limit=50`);
     const data = await r.json();
     const kws = data.data||[];
     document.getElementById('kwCount').textContent = kws.length;
     renderKwCloud(kws.slice(0,30));
-    document.getElementById('kwTable').innerHTML = kws.length ? kws.map(k=>`<tr><td style="font-weight:600">${k.keyword}</td><td class="mono">${(k.frequency||0).toLocaleString()}</td><td class="mono">${(k.sources?.shopee||0).toLocaleString()}</td><td class="mono">${(k.sources?.facebook||0).toLocaleString()}</td><td class="mono">${(k.sources?.instagram||0).toLocaleString()}</td><td><span style="color:${k.velocity>=1.5?'var(--green)':k.velocity<0.8?'var(--red)':'var(--fg2)'}">${k.velocity>=1.5?'↑↑':k.velocity>=1?'↑':k.velocity<0.8?'↓':'→'} ${k.velocity||1}</span></td><td>${scoreBadge(k.trend_score)}</td></tr>`).join('') : '<tr><td colspan="7"><div class="empty"><div class="empty-icon">🔑</div><div class="empty-title">Chua co tu khoa</div></div></td></tr>';
+    document.getElementById('kwTable').innerHTML = kws.length ? kws.map(k=>`<tr><td style="font-weight:600">${k.keyword}</td><td class="mono">${(k.frequency||0).toLocaleString()}</td><td class="mono">${(k.sources?.shopee||0).toLocaleString()}</td><td class="mono">${(k.sources?.facebook||0).toLocaleString()}</td><td class="mono">${(k.sources?.instagram||0).toLocaleString()}</td><td><span style="color:${k.velocity>=1.5?'var(--green)':k.velocity<0.8?'var(--red)':'var(--fg2)'}">${k.velocity>=1.5?'↑↑':k.velocity>=1?'↑':k.velocity<0.8?'↓':'→'} ${k.velocity||1}</span></td><td>${scoreBadge(k.trend_score)}</td></tr>`).join('') : '<tr><td colspan="7"><div class="empty"><div class="empty-icon">🔑</div><div class="empty-title">Chua co tu khoa — Hay crawl Shopee hoac search Facebook/Instagram truoc</div></div></td></tr>';
   } catch(e) { showToast('Loi: '+e.message,'error'); }
 }
 

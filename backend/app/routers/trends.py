@@ -108,7 +108,7 @@ async def update_trend_keywords(db: AsyncSession = Depends(get_db)):
     updated = 0
     for word, sources in keyword_sources.items():
         total_freq = sum(sources.values())
-        if total_freq < 2:
+        if total_freq < 1:
             continue
         trend_score = sources["shopee"] * 0.4 + sources["facebook"] * 0.4 + sources["instagram"] * 0.2
         existing = await db.execute(select(TrendKeyword).where(TrendKeyword.keyword == word))
