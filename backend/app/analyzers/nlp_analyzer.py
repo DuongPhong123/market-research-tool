@@ -32,6 +32,17 @@ NEGATIVE_WORDS = {
     "be", "phai", "bong", "xuoc", "meo", "co", "rut", "khong vua",
 }
 
+# Phrases signalling buying intent / price inquiry (transliterated Vietnamese)
+PRICE_INQUIRY_KEYWORDS = {
+    "xin gia", "gia bao nhieu", "bao nhieu tien", "gia thi truong",
+    "gia si", "gia le", "gia goc", "link mua", "mua o dau",
+    "dat hang", "order duoc khong", "inbox gia", "cho xin gia",
+    "pm gia", "dm gia", "nhan inbox", "lien he shop",
+    "mua nhu the nao", "con hang khong", "co ban khong",
+    "gia the nao", "dang ban khong", "mua duoc khong",
+    "bao nhieu", "gia ban", "ban gia",
+}
+
 PRODUCT_PATTERNS = [
     r"(?:mua|dat|order|dung|thu)\s+([a-zA-Z\s]{3,30})",
     r"san pham\s+([a-zA-Z\s]{3,30})",
@@ -57,6 +68,14 @@ def analyze_sentiment(text: str) -> float:
     if total == 0:
         return 0.0
     return round((pos_count - neg_count) / total, 3)
+
+
+def is_price_inquiry(text: str) -> bool:
+    """Return True if the comment contains a price/buying-intent signal."""
+    if not text:
+        return False
+    text_lower = text.lower()
+    return any(kw in text_lower for kw in PRICE_INQUIRY_KEYWORDS)
 
 
 def extract_keywords(text: str, top_n: int = 10) -> list[str]:
@@ -104,6 +123,7 @@ def analyze_comment(comment: dict) -> dict:
         "keywords": extract_keywords(content, top_n=5),
         "product_mentions": extract_product_mentions(content),
         "pain_points": extract_pain_points(content),
+        "is_price_inquiry": is_price_inquiry(content),
     }
 
 
@@ -113,12 +133,14 @@ def analyze_comments_batch(comments: list[dict]) -> dict:
             "overall_sentiment": 0.0, "sentiment_label": "Trung lap",
             "top_keywords": [], "top_pain_points": [], "top_product_mentions": [],
             "comment_count": 0, "positive_pct": 0, "negative_pct": 0,
+            "price_inquiry_count": 0, "price_inquiry_pct": 0.0,
         }
     analyzed = [analyze_comment(c) for c in comments]
     sentiments = [a["sentiment_score"] for a in analyzed]
     overall = sum(sentiments) / len(sentiments) if sentiments else 0.0
     positive_count = sum(1 for s in sentiments if s > 0.1)
     negative_count = sum(1 for s in sentiments if s < -0.1)
+    price_inquiry_count = sum(1 for a in analyzed if a.get("is_price_inquiry"))
     all_keywords, all_pain_points, all_mentions = [], [], []
     for a in analyzed:
         all_keywords.extend(a.get("keywords") or [])
@@ -133,6 +155,8 @@ def analyze_comments_batch(comments: list[dict]) -> dict:
         "comment_count": len(analyzed),
         "positive_pct": round(positive_count / len(analyzed) * 100, 1),
         "negative_pct": round(negative_count / len(analyzed) * 100, 1),
+        "price_inquiry_count": price_inquiry_count,
+        "price_inquiry_pct": round(price_inquiry_count / len(analyzed) * 100, 1),
     }
 
 
