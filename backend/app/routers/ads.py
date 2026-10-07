@@ -22,6 +22,17 @@ _DEMO_FB_ADS = [
     {"ad_id": "fb_demo_008", "page_name": "Collagen Shiseido Official VN", "ad_creative_body": "💊 Collagen Shiseido Enriched 126 viên – Dùng 84 ngày thấy da căng mịn rõ rệt. Hàng chính hãng Nhật Bản nhập khẩu. Combo 2 hộp giảm 15% + tặng kem dưỡng mini!", "ad_creative_title": "Collagen Shiseido Nhật – 84 Ngày Da Căng Mịn", "spend_min": 10000, "spend_max": 20000, "impressions_min": 150000, "impressions_max": 250000, "delivery_start": "2024-09-10", "delivery_stop": None, "platforms": ["facebook", "instagram"], "trending_score": 0.86, "keywords": ["collagen", "shiseido", "nhật bản", "da căng mịn", "84 ngày"], "price_inquiry_ratio": 0.24},
 ]
 
+_DEMO_IG_POSTS = [
+    {"post_id": "ig_demo_001", "username": "koreanfashionvn", "caption": "✨ Váy linen tay bồng mới về cực xinh! Form dáng A-line tôn dáng, chất linen cao cấp mặc mát. DM để đặt hàng nha cả nhà 💕 #vaydamhanquoc #thoitrangnu #linendress #ootdvietnam #fashionvn", "hashtags": ["vaydamhanquoc", "thoitrangnu", "linendress", "ootdvietnam", "fashionvn"], "likes_count": 8420, "comments_count": 312, "media_type": "IMAGE", "media_url": "", "post_url": "https://www.instagram.com/p/ig_demo_001/", "post_date": None, "source_hashtag": "vaydamhanquoc", "trending_score": 0.91, "keywords": ["váy linen", "hàn quốc", "dm đặt hàng"], "price_inquiry_ratio": 0.45},
+    {"post_id": "ig_demo_002", "username": "romand.vietnam", "caption": "💄 Son lì Zero Gram Matte #17 đang là màu hot nhất mùa thu! Lên màu chuẩn, không khô môi, bền cả ngày. Tag bạn thân để đi mua cùng nào 🍂 #sonmoi #romand #matte #beautyvietnam #makeupreview", "hashtags": ["sonmoi", "romand", "matte", "beautyvietnam", "makeupreview"], "likes_count": 15600, "comments_count": 890, "media_type": "IMAGE", "media_url": "", "post_url": "https://www.instagram.com/p/ig_demo_002/", "post_date": None, "source_hashtag": "sonmoi", "trending_score": 0.95, "keywords": ["son lì", "romand", "matte", "mùa thu"], "price_inquiry_ratio": 0.38},
+    {"post_id": "ig_demo_003", "username": "anessa.vietnam.official", "caption": "☀️ Bảo vệ da khỏi tia UV với Anessa Perfect UV SPF50+ PA++++ – sản phẩm chống nắng bán chạy nhất Nhật Bản 15 năm! Kiềm dầu, bền bỉ dưới nắng hè. Combo Anessa tháng 10 giảm 20% 🌸 #kemchongnang #anessa #skincarevietnam #beautytips #spf50", "hashtags": ["kemchongnang", "anessa", "skincarevietnam", "beautytips", "spf50"], "likes_count": 22300, "comments_count": 1240, "media_type": "IMAGE", "media_url": "", "post_url": "https://www.instagram.com/p/ig_demo_003/", "post_date": None, "source_hashtag": "kemchongnang", "trending_score": 0.93, "keywords": ["chống nắng", "anessa", "spf50", "nhật bản"], "price_inquiry_ratio": 0.29},
+    {"post_id": "ig_demo_004", "username": "streetstyle.hanoi", "caption": "🌿 Outfit đi làm ngày thu – áo blazer oversize + quần ống rộng = combo công sở chuẩn Âu! Link mua trong bio nha mn 🔗 #ootdhanoi #thoitrangcongso #blazer #streetstyle #fashionista", "hashtags": ["ootdhanoi", "thoitrangcongso", "blazer", "streetstyle", "fashionista"], "likes_count": 11200, "comments_count": 456, "media_type": "IMAGE", "media_url": "", "post_url": "https://www.instagram.com/p/ig_demo_004/", "post_date": None, "source_hashtag": "thoitrangnu", "trending_score": 0.83, "keywords": ["blazer", "công sở", "thu đông", "ootd"], "price_inquiry_ratio": 0.31},
+    {"post_id": "ig_demo_005", "username": "klairs_vietnam", "caption": "✨ Serum Vitamin C 5% từ Klairs – sáng da mờ thâm không kích ứng! Phù hợp cả da nhạy cảm. Dùng buổi tối trước kem dưỡng nha mn 🌙 Review sau 30 ngày: da sáng rõ rệt! #serumvitaminc #klairs #skincareroutine #csakin #beautyvn", "hashtags": ["serumvitaminc", "klairs", "skincareroutine", "csakin", "beautyvn"], "likes_count": 9870, "comments_count": 623, "media_type": "VIDEO", "media_url": "", "post_url": "https://www.instagram.com/p/ig_demo_005/", "post_date": None, "source_hashtag": "skincare", "trending_score": 0.88, "keywords": ["serum", "vitamin c", "sáng da", "klairs"], "price_inquiry_ratio": 0.22},
+    {"post_id": "ig_demo_006", "username": "tuixach.canvas.vn", "caption": "👜 Túi tote canvas hot nhất tháng 10! 12 màu, chất dày, đựng vừa laptop 15.6inch. Mẫu mới về liên tục, order nhanh kẻo hết hàng nha! DM = giá sỉ 🛍️ #tuixach #canvasbag #tuicampus #fashionaccessories #handbagvn", "hashtags": ["tuixach", "canvasbag", "tuicampus", "fashionaccessories", "handbagvn"], "likes_count": 18900, "comments_count": 2100, "media_type": "IMAGE", "media_url": "", "post_url": "https://www.instagram.com/p/ig_demo_006/", "post_date": None, "source_hashtag": "tuixach", "trending_score": 0.89, "keywords": ["túi tote", "canvas", "laptop", "12 màu"], "price_inquiry_ratio": 0.52},
+    {"post_id": "ig_demo_007", "username": "hadalabo.vn", "caption": "💧 Nước hoa hồng Hada Labo Gokujyun Premium – cấp ẩm tầng sâu, da căng mịn như da em bé! Best seller skincare Nhật dùng được cho mọi loại da. Bottle 170ml xài được 3 tháng 🇯🇵 #hadalabo #nuochoahong #skincarejapan #duongda #beautyvietnam", "hashtags": ["hadalabo", "nuochoahong", "skincarejapan", "duongda", "beautyvietnam"], "likes_count": 14500, "comments_count": 780, "media_type": "IMAGE", "media_url": "", "post_url": "https://www.instagram.com/p/ig_demo_007/", "post_date": None, "source_hashtag": "skincare", "trending_score": 0.87, "keywords": ["nước hoa hồng", "hada labo", "nhật bản", "cấp ẩm"], "price_inquiry_ratio": 0.18},
+    {"post_id": "ig_demo_008", "username": "nike.vietnam.official", "caption": "👟 Nike Air Force 1 Low trắng – classic không bao giờ lỗi mốt! Pair với mọi outfit từ casual đến semi-formal. Available tại Nike Store Hà Nội và HCM + mua online tại link bio 🤍 #nike #airforce1 #sneakers #giaytheothao #sneakervietnam", "hashtags": ["nike", "airforce1", "sneakers", "giaytheothao", "sneakervietnam"], "likes_count": 31200, "comments_count": 1890, "media_type": "IMAGE", "media_url": "", "post_url": "https://www.instagram.com/p/ig_demo_008/", "post_date": None, "source_hashtag": "giay", "trending_score": 0.92, "keywords": ["nike", "air force 1", "sneaker", "trắng"], "price_inquiry_ratio": 0.27},
+]
+
 
 @router.get("/facebook/trending")
 async def get_trending_fb_ads(db: AsyncSession = Depends(get_db), limit: int = Query(20, ge=1, le=100)):
@@ -117,15 +128,31 @@ async def search_instagram_hashtag(
     db: AsyncSession = Depends(get_db),
     use_api: bool = Query(False),
 ):
-    if use_api:
-        scraper = InstagramGraphScraper()
-        posts = await scraper.get_hashtag_top_media(hashtag, limit=30)
-    else:
-        scraper = InstagramWebScraper()
-        posts = await scraper.scrape_hashtag(hashtag, max_posts=20)
+    posts = []
+    scrape_error = None
+    try:
+        if use_api:
+            scraper = InstagramGraphScraper()
+            posts = await scraper.get_hashtag_top_media(hashtag, limit=30)
+        else:
+            scraper = InstagramWebScraper()
+            posts = await scraper.scrape_hashtag(hashtag, max_posts=20)
+    except Exception as e:
+        scrape_error = str(e)
 
     if not posts:
-        return {"hashtag": hashtag, "data": [], "message": "Khong lay duoc data Instagram"}
+        kw = hashtag.lower().lstrip("#")
+        demo = [p for p in _DEMO_IG_POSTS if kw in " ".join(p.get("hashtags", [])).lower() or kw in (p.get("caption") or "").lower()]
+        if not demo:
+            demo = _DEMO_IG_POSTS
+        return {
+            "hashtag": hashtag,
+            "data": demo,
+            "total": len(demo),
+            "demo": True,
+            "error": scrape_error,
+            "hint": "Dang hien thi du lieu DEMO. Instagram yeu cau dang nhap nen khong scrape duoc tu server.",
+        }
 
     for post in posts:
         caption = post.get("caption") or ""

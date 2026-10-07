@@ -1030,19 +1030,27 @@ async function searchIg() {
   try {
     const r = await fetch(`${API}/api/ads/instagram/hashtag?hashtag=${encodeURIComponent(hashtag)}`);
     const data = await r.json();
-    renderIgTable(data.data||[]);
-    document.getElementById('igCount').textContent = data.total||0;
-    showToast(`Tim thay ${data.total||0} posts`,'success');
+    if (data.demo) {
+      renderIgTable(data.data||[], true);
+      document.getElementById('igCount').textContent = (data.total||0) + ' (demo)';
+      showToast('Instagram yeu cau dang nhap — hien thi du lieu DEMO', 'info');
+    } else {
+      renderIgTable(data.data||[]);
+      document.getElementById('igCount').textContent = data.total||0;
+      if ((data.total||0) > 0) showToast(`Tim thay ${data.total} posts`,'success');
+      else showToast('Khong tim thay posts','info');
+    }
   } catch(e) {
     document.getElementById('igTable').innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-icon">❌</div><div class="empty-title">Loi ket noi</div></div></td></tr>';
     showToast('Loi: '+e.message,'error');
   } finally { btn.disabled=false; btn.textContent='Tim Posts'; }
 }
 
-function renderIgTable(posts) {
+function renderIgTable(posts, isDemo=false) {
   const tbody = document.getElementById('igTable');
   if (!posts.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-icon">📸</div><div class="empty-title">Khong tim thay posts</div></div></td></tr>'; return; }
-  tbody.innerHTML = posts.map(p=>`<tr><td style="font-weight:500">@${p.username||'—'}</td><td style="max-width:250px;font-size:12.5px;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(p.caption||'').substring(0,80)||'—'}</td><td class="mono">❤️ ${(p.likes_count||0).toLocaleString()}</td><td class="mono">💬 ${(p.comments_count||0).toLocaleString()}</td><td><div class="tags">${(p.hashtags||[]).slice(0,3).map(h=>`<span class="tag">#${h}</span>`).join('')}</div></td><td>${scoreBadge(p.trending_score)}</td><td>${p.post_url?`<a class="aff-link" href="${p.post_url}" target="_blank">↗</a>`:'—'}</td></tr>`).join('');
+  const demoBanner = isDemo ? `<tr><td colspan="7" style="background:rgba(245,166,35,0.12);padding:8px 12px;font-size:12px;color:var(--amber);text-align:center">⚠️ DU LIEU DEMO — Instagram can dang nhap de scrape that</td></tr>` : '';
+  tbody.innerHTML = demoBanner + posts.map(p=>`<tr><td style="font-weight:500">@${p.username||'—'}</td><td style="max-width:250px;font-size:12.5px;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(p.caption||'').substring(0,80)||'—'}</td><td class="mono">❤️ ${(p.likes_count||0).toLocaleString()}</td><td class="mono">💬 ${(p.comments_count||0).toLocaleString()}</td><td><div class="tags">${(p.hashtags||[]).slice(0,3).map(h=>`<span class="tag">#${h}</span>`).join('')}</div></td><td>${scoreBadge(p.trending_score)}</td><td>${p.post_url?`<a class="aff-link" href="${p.post_url}" target="_blank">↗</a>`:'—'}</td></tr>`).join('');
 }
 
 async function loadKeywords() {
