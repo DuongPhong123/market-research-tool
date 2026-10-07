@@ -32,7 +32,7 @@ async def search_facebook_ads(
     try:
         ads = await scraper.search_ads(keyword, country=country, limit=50)
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Loi Meta API: {str(e)}")
+        return {"data": [], "keyword": keyword, "total": 0, "error": str(e)}
 
     for ad in ads:
         body = ad.get("ad_creative_body") or ""

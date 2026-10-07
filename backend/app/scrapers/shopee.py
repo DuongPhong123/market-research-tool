@@ -91,13 +91,26 @@ class ShopeeAffiliateScraper:
 
         return await self.get_trending_public(keyword=keyword, limit=limit)
 
+    def _browser_headers(self, referer: str = "https://shopee.vn/") -> dict:
+        return {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Referer": referer,
+            "x-api-source": "pc",
+            "x-requested-with": "XMLHttpRequest",
+            "x-shopee-language": "vi",
+            "Connection": "keep-alive",
+        }
+
     async def get_trending_public(self, keyword: str = "", limit: int = 50) -> list[dict]:
         """Public Shopee search sorted by sales — no affiliate credentials needed.
 
         When keyword is empty, sweeps across popular product categories to
         build a broader trending list (deduped by item_id).
         """
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36", "Referer": "https://shopee.vn/"}
+        headers = self._browser_headers()
 
         async def _fetch(kw: str, n: int) -> list[dict]:
             url = f"{self.SHOP_URL}/search/search_items"
@@ -151,12 +164,17 @@ class ShopeeAffiliateScraper:
             "newest": 0, "order": "desc",
             "page_type": "search", "scenario": "PAGE_GLOBAL_SEARCH", "version": 2,
         }
-        headers = {"User-Agent": "Mozilla/5.0", "Referer": f"https://shopee.vn/search?keyword={keyword}"}
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.get(url, params=params, headers=headers)
-            if resp.status_code == 200:
-                items = resp.json().get("items", [])
-                return [self._normalize_search_item(i) for i in items if i]
+        headers = self._browser_headers(f"https://shopee.vn/search?keyword={keyword}")
+        try:
+            async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+                resp = await client.get(url, params=params, headers=headers)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    items = data.get("items") or []
+                    return [self._normalize_search_item(i) for i in items if i]
+                logger.warning(f"Shopee search HTTP {resp.status_code} for '{keyword}'")
+        except Exception as e:
+            logger.warning(f"Shopee search error for '{keyword}': {e}")
         return []
 
     async def get_flash_sale_products(self) -> list[dict]:
@@ -197,22 +215,27 @@ class ShopeeAffiliateScraper:
 
     def _normalize_search_item(self, raw: dict) -> dict:
         basic = raw.get("item_basic") or raw
+        item_rating = basic.get("item_rating") or {}
+        rating_count = item_rating.get("rating_count")
+        review_count = rating_count[0] if isinstance(rating_count, list) and rating_count else 0
+        item_id = str(basic.get("itemid") or basic.get("item_id") or "")
+        shop_id = str(basic.get("shopid") or basic.get("shop_id") or "")
         return {
-            "item_id": str(basic.get("itemid") or basic.get("item_id") or ""),
-            "shop_id": str(basic.get("shopid") or basic.get("shop_id") or ""),
+            "item_id": item_id,
+            "shop_id": shop_id,
             "name": basic.get("name") or "",
             "price_min": (basic.get("price_min") or basic.get("price") or 0) / 100000,
             "price_max": (basic.get("price_max") or basic.get("price") or 0) / 100000,
             "sold": basic.get("historical_sold") or basic.get("sold") or 0,
-            "rating": basic.get("item_rating", {}).get("rating_star") or 0,
-            "review_count": basic.get("item_rating", {}).get("rating_count", [0])[0] if basic.get("item_rating") else 0,
+            "rating": item_rating.get("rating_star") or 0,
+            "review_count": review_count,
             "liked_count": basic.get("liked_count") or 0,
-            "shop_name": "",
+            "shop_name": basic.get("shop_name") or "",
             "image_url": basic.get("image") or "",
             "affiliate_url": "",
             "commission_rate": 0,
             "is_shopee_mall": basic.get("shopee_verified") or False,
-            "product_url": f"https://shopee.vn/product/{basic.get('shopid', '')}/{basic.get('itemid', '')}",
+            "product_url": f"https://shopee.vn/product/{shop_id}/{item_id}",
         }
 
     def _normalize_review(self, raw: dict, item_id: str) -> dict:

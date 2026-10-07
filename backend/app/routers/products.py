@@ -35,19 +35,25 @@ async def search_and_analyze(
     db: AsyncSession = Depends(get_db),
     save: bool = Query(True),
 ):
-    scraper = ShopeeAffiliateScraper()
-    products = await scraper.search_products(keyword, limit=30)
-    if not products:
-        return {"data": [], "keyword": keyword, "message": "Khong tim thay san pham"}
-    for p in products:
-        p["trending_score"] = score_shopee_product(p)
-    if save:
-        await _upsert_products(db, products)
-    return {
-        "keyword": keyword,
-        "data": sorted(products, key=lambda x: x.get("trending_score", 0), reverse=True),
-        "total": len(products),
-    }
+    try:
+        scraper = ShopeeAffiliateScraper()
+        products = await scraper.search_products(keyword, limit=30)
+        if not products:
+            return {"data": [], "keyword": keyword, "total": 0, "message": "Shopee khong tra ve ket qua — co the bi block tam thoi, thu lai sau"}
+        for p in products:
+            try:
+                p["trending_score"] = score_shopee_product(p)
+            except Exception:
+                p["trending_score"] = 0.0
+        if save:
+            await _upsert_products(db, products)
+        return {
+            "keyword": keyword,
+            "data": sorted(products, key=lambda x: x.get("trending_score", 0), reverse=True),
+            "total": len(products),
+        }
+    except Exception as e:
+        return {"data": [], "keyword": keyword, "total": 0, "message": f"Loi: {str(e)}"}
 
 
 @router.get("/{item_id}/reviews")

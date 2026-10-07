@@ -8,45 +8,57 @@ from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-ADS_LIBRARY_URL = "https://graph.facebook.com/v18.0/ads_archive"
-GRAPH_URL = "https://graph.facebook.com/v18.0"
+ADS_LIBRARY_URL = "https://graph.facebook.com/v20.0/ads_archive"
+GRAPH_URL = "https://graph.facebook.com/v20.0"
 
 
 class FacebookAdsScraper:
     def __init__(self, token: Optional[str] = None):
         self.token = token or settings.facebook_access_token
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
     async def search_ads(self, search_terms: str, country: str = "VN", ad_type: str = "ALL", limit: int = 50, active_status: str = "ACTIVE") -> list[dict]:
+        if not self.token:
+            raise ValueError("Chua co Facebook Access Token — vao tab Facebook Ads de nhap token")
         params = {
             "access_token": self.token,
             "ad_type": ad_type,
             "ad_reached_countries": country,
             "search_terms": search_terms,
             "ad_active_status": active_status,
-            "limit": limit,
+            "limit": min(limit, 50),
             "fields": ",".join([
                 "id", "page_id", "page_name", "ad_creative_bodies", "ad_creative_link_titles",
                 "ad_creative_link_descriptions", "ad_creative_link_captions",
                 "ad_delivery_start_time", "ad_delivery_stop_time", "currency",
                 "spend", "impressions", "publisher_platforms", "languages",
-                "target_ages", "target_gender", "target_locations",
             ]),
         }
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.get(ADS_LIBRARY_URL, params=params)
-            resp.raise_for_status()
-            data = resp.json()
-
-        ads = data.get("data", [])
-        result = [self._normalize_ad(a) for a in ads]
-
-        next_cursor = data.get("paging", {}).get("cursors", {}).get("after")
-        if next_cursor and len(result) < limit:
-            more = await self._fetch_next_page(params, next_cursor, limit - len(result))
-            result.extend(more)
-
-        return result
+        try:
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                resp = await client.get(ADS_LIBRARY_URL, params=params)
+                data = resp.json()
+                # Facebook API returns 200 even for errors, check the error field
+                if "error" in data:
+                    err = data["error"]
+                    code = err.get("code", "")
+                    msg = err.get("message", "Unknown error")
+                    if code in (190, 102, 463, 467):
+                        raise ValueError(f"Token het han hoac khong hop le. Lay token moi tai developers.facebook.com/tools/explorer")
+                    if code == 200:
+                        raise ValueError(f"Token thieu quyen 'ads_read'. Vao Graph API Explorer → Add Permission → ads_read → Generate Token moi")
+                    raise ValueError(f"Facebook API loi {code}: {msg}")
+                ads = data.get("data", [])
+                result = [self._normalize_ad(a) for a in ads]
+                next_cursor = data.get("paging", {}).get("cursors", {}).get("after")
+                if next_cursor and len(result) < limit:
+                    more = await self._fetch_next_page(params, next_cursor, limit - len(result))
+                    result.extend(more)
+                return result
+        except ValueError:
+            raise
+        except Exception as e:
+            logger.warning(f"Facebook Ads search error: {e}")
+            raise ValueError(f"Loi ket noi Facebook API: {str(e)}")
 
     async def _fetch_next_page(self, params: dict, cursor: str, limit: int) -> list[dict]:
         params = {**params, "after": cursor, "limit": min(limit, 50)}
