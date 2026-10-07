@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database import init_db
-from app.routers import products, ads, trends
+from app.routers import products, ads, trends, fashion
 from app.scheduler import setup_scheduler, scheduler
 
 logging.basicConfig(
@@ -31,8 +31,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Market Research Tool",
-    description="Cong cu nghien cuu thi truong Shopee + Facebook + Instagram",
-    version="1.0.0",
+    description="Cong cu nghien cuu thi truong Shopee + Facebook + Instagram — Thoi trang nu 22-35",
+    version="1.1.0",
     lifespan=lifespan,
 )
 
@@ -47,11 +47,12 @@ app.add_middleware(
 app.include_router(products.router)
 app.include_router(ads.router)
 app.include_router(trends.router)
+app.include_router(fashion.router)
 
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "ok", "version": "1.0.0"}
+    return {"status": "ok", "version": "1.1.0"}
 
 
 @app.get("/api/status")
