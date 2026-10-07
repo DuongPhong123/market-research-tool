@@ -45,9 +45,10 @@ REM === Cai dat thu vien Python ===
 echo.
 echo [INFO] Dang kiem tra va cai dat thu vien Python...
 cd backend
-pip install -r requirements.txt -q --disable-pip-version-check
+python -m pip install -r requirements.txt -q --disable-pip-version-check
 if errorlevel 1 (
     echo [LOI] Cai dat thu vien that bai!
+    echo Thu chay lai voi quyen Admin: click chuot phai run_local.bat - Run as administrator
     pause
     exit /b 1
 )
