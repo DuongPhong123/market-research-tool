@@ -2,7 +2,7 @@
 chcp 65001 >nul
 title Market Research Tool
 
-REM === Di chuyen ve thu muc chua bat file (fix cd path) ===
+REM === Di chuyen ve thu muc chua bat file ===
 cd /d "%~dp0"
 
 echo.
@@ -54,10 +54,17 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-python -m pip install -r requirements.txt -q --disable-pip-version-check
+python -m pip install -r requirements.txt -q --disable-pip-version-check --prefer-binary
 if errorlevel 1 (
+    echo.
     echo [LOI] Cai dat thu vien that bai!
-    echo Thu chay lai voi quyen Admin: click chuot phai run_local.bat - Run as administrator
+    echo.
+    echo  Khuyen nghi: Dung Python 3.11 hoac 3.12 thay vi Python 3.14
+    echo  Tai tai: https://www.python.org/downloads/release/python-3119/
+    echo  (Python 3.11.9 - Windows installer 64-bit)
+    echo.
+    echo  Hoac thu chay lai voi quyen Admin:
+    echo  Click chuot phai run_local.bat - Run as administrator
     pause
     exit /b 1
 )
