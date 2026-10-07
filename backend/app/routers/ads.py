@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, or_
 from typing import Optional
 from app.database import get_db
 from app.models.ad import FacebookAd, InstagramPost, SocialComment
 from app.scrapers.facebook import FacebookAdsScraper, FacebookPageScraper
 from app.scrapers.instagram import InstagramGraphScraper, InstagramWebScraper
-from app.analyzers.nlp_analyzer import analyze_comments_batch, extract_keywords
+from app.analyzers.nlp_analyzer import analyze_comments_batch, extract_keywords, is_price_inquiry
 from app.analyzers.trend_scorer import score_facebook_ad, score_instagram_post
 
 router = APIRouter(prefix="/api/ads", tags=["Ads & Social"])
@@ -32,12 +32,18 @@ async def search_facebook_ads(
         ads = await scraper.search_ads(keyword, country=country, limit=50)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Loi Meta API: {str(e)}")
+
     for ad in ads:
-        ad["trending_score"] = score_facebook_ad(ad)
         body = ad.get("ad_creative_body") or ""
         title = ad.get("ad_creative_title") or ""
-        ad["keywords"] = extract_keywords(f"{title} {body}", top_n=8)
-        ad["product_keywords"] = _detect_product_keywords(f"{title} {body}")
+        full_text = f"{title} {body}"
+        # Proxy: ad copy that uses price-attracting language (e.g. "gia ban",
+        # "inbox gia", "lien he shop") predicts higher price-inquiry comment rate.
+        ad["price_inquiry_ratio"] = 0.20 if is_price_inquiry(full_text) else 0.0
+        ad["trending_score"] = score_facebook_ad(ad)
+        ad["keywords"] = extract_keywords(full_text, top_n=8)
+        ad["product_keywords"] = _detect_product_keywords(full_text)
+
     if save:
         await _upsert_ads(db, ads)
     return {
@@ -56,10 +62,27 @@ async def analyze_facebook_comments(
     page_scraper = FacebookPageScraper()
     all_comments = await page_scraper.crawl_keyword_comments(keyword, max_posts=max_posts, max_comments_per_post=100)
     if not all_comments:
-        return {"keyword": keyword, "message": "Khong lay duoc comments. Kiem tra Facebook Access Token.", "analysis": {}}
+        return {
+            "keyword": keyword,
+            "message": "Khong lay duoc comments. Kiem tra Facebook Access Token.",
+            "analysis": {},
+        }
+
     analysis = analyze_comments_batch(all_comments)
     await _save_comments(db, all_comments)
-    return {"keyword": keyword, "total_comments": len(all_comments), "analysis": analysis, "sample_comments": all_comments[:10]}
+
+    # Use real price_inquiry_pct from comments to update trending_score of ads
+    # that were previously scraped for this same keyword.
+    real_ratio = analysis.get("price_inquiry_pct", 0) / 100
+    if real_ratio > 0:
+        await _update_ads_price_inquiry(db, keyword, real_ratio)
+
+    return {
+        "keyword": keyword,
+        "total_comments": len(all_comments),
+        "analysis": analysis,
+        "sample_comments": all_comments[:10],
+    }
 
 
 @router.get("/instagram/hashtag")
@@ -74,11 +97,18 @@ async def search_instagram_hashtag(
     else:
         scraper = InstagramWebScraper()
         posts = await scraper.scrape_hashtag(hashtag, max_posts=20)
+
     if not posts:
         return {"hashtag": hashtag, "data": [], "message": "Khong lay duoc data Instagram"}
+
     for post in posts:
+        caption = post.get("caption") or ""
+        # Seller captions like "comment 'gia' to order", "inbox for price" signal
+        # that buyers will flood comments with price inquiries.
+        post["price_inquiry_ratio"] = 0.25 if is_price_inquiry(caption) else 0.0
         post["trending_score"] = score_instagram_post(post)
-        post["keywords"] = extract_keywords(post.get("caption") or "", top_n=5)
+        post["keywords"] = extract_keywords(caption, top_n=5)
+
     posts_sorted = sorted(posts, key=lambda x: x.get("trending_score", 0), reverse=True)
     await _upsert_ig_posts(db, posts_sorted)
     return {"hashtag": hashtag, "data": posts_sorted, "total": len(posts_sorted)}
@@ -96,11 +126,36 @@ async def get_comments_analysis(
     q = q.limit(500)
     result = await db.execute(q)
     comments = result.scalars().all()
-    comments_dict = [{"source": c.source, "post_id": c.post_id, "content": c.content, "author": c.author, "likes": c.likes} for c in comments]
+    comments_dict = [
+        {"source": c.source, "post_id": c.post_id, "content": c.content, "author": c.author, "likes": c.likes}
+        for c in comments
+    ]
     if keyword:
         comments_dict = [c for c in comments_dict if keyword.lower() in (c.get("content") or "").lower()]
     analysis = analyze_comments_batch(comments_dict)
     return {"total_comments": len(comments_dict), "analysis": analysis}
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+async def _update_ads_price_inquiry(db: AsyncSession, keyword: str, ratio: float) -> None:
+    """Recalculate trending_score for ads matching keyword using real comment ratio."""
+    q = select(FacebookAd).where(
+        or_(
+            FacebookAd.ad_creative_body.ilike(f"%{keyword}%"),
+            FacebookAd.ad_creative_title.ilike(f"%{keyword}%"),
+        )
+    )
+    result = await db.execute(q)
+    ads = result.scalars().all()
+    for ad_obj in ads:
+        ad_dict = _ad_to_dict(ad_obj)
+        ad_dict["price_inquiry_ratio"] = ratio
+        ad_obj.trending_score = score_facebook_ad(ad_dict)
+    if ads:
+        await db.commit()
 
 
 def _detect_product_keywords(text: str) -> list[str]:
@@ -162,5 +217,6 @@ def _ad_to_dict(a: FacebookAd) -> dict:
         "spend_min": a.spend_min, "spend_max": a.spend_max,
         "impressions_min": a.impressions_min, "impressions_max": a.impressions_max,
         "delivery_start": str(a.delivery_start) if a.delivery_start else None,
+        "delivery_stop": str(a.delivery_stop) if a.delivery_stop else None,
         "platforms": a.platforms, "trending_score": a.trending_score, "keywords": a.keywords,
     }
