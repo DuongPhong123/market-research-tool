@@ -941,11 +941,17 @@ async function searchFbAds() {
     const _fbt = getFbToken(); const _fbtParam = _fbt ? `&fb_token=${encodeURIComponent(_fbt)}` : '';
     const r = await fetch(`${API}/api/ads/facebook/search?keyword=${encodeURIComponent(kw)}&country=${country}${_fbtParam}`);
     const data = await r.json();
-    renderFbAdsTable(data.data||[]);
-    document.getElementById('fbAdCount').textContent = data.total||0;
-    showToast(`Tim thay ${data.total||0} quang cao`,'success');
+    if (data.error) {
+      document.getElementById('fbAdsTable').innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title" style="color:var(--amber)">${data.error}</div></div></td></tr>`;
+      showToast(data.error,'error');
+    } else {
+      renderFbAdsTable(data.data||[]);
+      document.getElementById('fbAdCount').textContent = data.total||0;
+      if ((data.total||0) > 0) showToast(`Tim thay ${data.total} quang cao`,'success');
+      else showToast('Khong co ket qua — thu tu khoa khac','info');
+    }
   } catch(e) {
-    document.getElementById('fbAdsTable').innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-icon">❌</div><div class="empty-title">Loi ket noi</div></div></td></tr>';
+    document.getElementById('fbAdsTable').innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-icon">❌</div><div class="empty-title">Loi ket noi server</div></div></td></tr>';
     showToast('Loi: '+e.message,'error');
   } finally { btn.disabled=false; btn.textContent='Tim quang cao'; }
 }
