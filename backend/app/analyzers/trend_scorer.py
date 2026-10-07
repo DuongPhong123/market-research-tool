@@ -25,14 +25,30 @@ def score_shopee_product(product: dict) -> float:
 
 
 def score_facebook_ad(ad: dict) -> float:
+    """
+    Weights: spend 35%, impressions 25%, freshness 15%, active 10%, price_inquiry 15%
+
+    freshness: linear decay over 90 days from ad start date.
+      day 0  -> 1.0  (brand-new campaign)
+      day 45 -> 0.5
+      day 90 -> 0.1  (floor; ad never scores 0 for running long)
+
+    price_inquiry_ratio: fraction of comments asking for price/buying info,
+      pre-calculated upstream from analyze_comments_batch() and stored in ad dict.
+      Higher ratio = stronger purchase intent = higher score.
+    """
     spend_max = ad.get("spend_max") or 0
     impressions_max = ad.get("impressions_max") or 0
     delivery_start = ad.get("delivery_start")
     delivery_stop = ad.get("delivery_stop")
+    # 0.0–1.0: fraction of comments that are price/buying inquiries
+    price_inquiry_ratio = min(float(ad.get("price_inquiry_ratio") or 0), 1.0)
 
     spend_score = min(math.log1p(spend_max) / math.log1p(100_000_000), 1.0)
     imp_score = min(math.log1p(impressions_max) / math.log1p(10_000_000), 1.0)
 
+    # Freshness: ad started within 90 days scores higher; floor at 0.1 so
+    # a long-running successful campaign is not penalised to zero.
     freshness_score = 0.5
     if delivery_start:
         try:
@@ -43,16 +59,41 @@ def score_facebook_ad(ad: dict) -> float:
             pass
 
     is_active = delivery_stop is None
-    active_bonus = 0.2 if is_active else 0.0
+    active_bonus = 1.0 if is_active else 0.0
 
-    score = spend_score * 0.40 + imp_score * 0.30 + freshness_score * 0.20 + active_bonus * 0.10
+    # price_inquiry: cap at 30 % of comments to reach full score (avoid spam bias)
+    piq_score = min(price_inquiry_ratio / 0.30, 1.0)
+
+    score = (
+        spend_score * 0.35
+        + imp_score * 0.25
+        + freshness_score * 0.15
+        + active_bonus * 0.10
+        + piq_score * 0.15
+    )
     return round(min(score, 1.0) * 100, 2)
 
 
 def score_instagram_post(post: dict) -> float:
+    """
+    Weights: engagement 45%, freshness 25%, comment_ratio 15%, price_inquiry 15%
+
+    freshness: linear decay over 14 days (Instagram trends are short-lived).
+      day 0  -> 1.0
+      day 7  -> 0.5
+      day 14 -> 0.0  (post older than 2 weeks contributes nothing to freshness)
+
+    comment_ratio: comments / (likes + comments).
+      High ratio = people are talking, not just scrolling past.
+
+    price_inquiry_ratio: fraction of comments asking for price/buying info.
+      Pre-calculated upstream; cap at 25 % of comments to reach full score.
+    """
     likes = post.get("likes_count") or 0
     comments = post.get("comments_count") or 0
     post_date = post.get("post_date")
+    # 0.0–1.0: fraction of comments that are price/buying inquiries
+    price_inquiry_ratio = min(float(post.get("price_inquiry_ratio") or 0), 1.0)
 
     engagement = likes + comments * 3
     eng_score = min(math.log1p(engagement) / math.log1p(50000), 1.0)
@@ -60,6 +101,7 @@ def score_instagram_post(post: dict) -> float:
     comment_ratio = comments / total if total > 0 else 0
     ratio_score = min(comment_ratio * 5, 1.0)
 
+    # Freshness: 14-day window; posts older than 2 weeks score 0 on freshness.
     freshness_score = 0.5
     if post_date:
         try:
@@ -72,7 +114,15 @@ def score_instagram_post(post: dict) -> float:
         except Exception:
             pass
 
-    score = eng_score * 0.50 + ratio_score * 0.20 + freshness_score * 0.30
+    # price_inquiry: cap at 25 % of comments to reach full score
+    piq_score = min(price_inquiry_ratio / 0.25, 1.0)
+
+    score = (
+        eng_score * 0.45
+        + freshness_score * 0.25
+        + ratio_score * 0.15
+        + piq_score * 0.15
+    )
     return round(score * 100, 2)
 
 
