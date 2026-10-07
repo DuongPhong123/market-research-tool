@@ -124,4 +124,34 @@ async def update_trend_keywords(db: AsyncSession = Depends(get_db)):
             db.add(obj)
         updated += 1
     await db.commit()
+
+    # If DB had no data, seed with demo keywords so the tab is never empty
+    if updated == 0:
+        _DEMO_SEEDS = [
+            ("son môi", {"shopee": 3, "facebook": 4, "instagram": 2}, 0.92),
+            ("kem chống nắng", {"shopee": 4, "facebook": 3, "instagram": 3}, 0.89),
+            ("serum vitamin c", {"shopee": 2, "facebook": 3, "instagram": 2}, 0.85),
+            ("váy đầm hàn quốc", {"shopee": 3, "facebook": 5, "instagram": 4}, 0.94),
+            ("túi tote canvas", {"shopee": 2, "facebook": 3, "instagram": 3}, 0.82),
+            ("nồi chiên không dầu", {"shopee": 5, "facebook": 4, "instagram": 1}, 0.88),
+            ("collagen nhật bản", {"shopee": 2, "facebook": 3, "instagram": 2}, 0.83),
+            ("toner hàn quốc", {"shopee": 3, "facebook": 2, "instagram": 3}, 0.80),
+            ("blazer oversize", {"shopee": 2, "facebook": 3, "instagram": 5}, 0.87),
+            ("sneaker nike", {"shopee": 3, "facebook": 2, "instagram": 4}, 0.86),
+            ("romand", {"shopee": 1, "facebook": 4, "instagram": 3}, 0.90),
+            ("anessa", {"shopee": 2, "facebook": 4, "instagram": 3}, 0.91),
+            ("klairs", {"shopee": 1, "facebook": 3, "instagram": 3}, 0.84),
+            ("thu đông 2024", {"shopee": 3, "facebook": 5, "instagram": 4}, 0.93),
+            ("skincare nhật", {"shopee": 2, "facebook": 2, "instagram": 4}, 0.81),
+        ]
+        for word, sources, score in _DEMO_SEEDS:
+            existing = await db.execute(select(TrendKeyword).where(TrendKeyword.keyword == word))
+            obj = existing.scalar_one_or_none()
+            if not obj:
+                total_f = sum(sources.values())
+                db.add(TrendKeyword(keyword=word, frequency=total_f, sources=sources, trend_score=score, velocity=1.2))
+                updated += 1
+        await db.commit()
+        return {"message": f"Cap nhat {updated} tu khoa trending (demo seed)", "demo": True}
+
     return {"message": f"Cap nhat {updated} tu khoa trending"}
