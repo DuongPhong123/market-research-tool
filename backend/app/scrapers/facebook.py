@@ -43,9 +43,11 @@ class FacebookAdsScraper:
                     code = err.get("code", "")
                     msg = err.get("message", "Unknown error")
                     if code in (190, 102, 463, 467):
-                        raise ValueError(f"Token het han hoac khong hop le. Lay token moi tai developers.facebook.com/tools/explorer")
+                        raise ValueError(f"Token het han hoac khong hop le. Vao developers.facebook.com/tools/explorer → Generate Token moi")
                     if code == 200:
                         raise ValueError(f"Token thieu quyen 'ads_read'. Vao Graph API Explorer → Add Permission → ads_read → Generate Token moi")
+                    if code == 10:
+                        raise ValueError(f"Facebook App chua duoc cap quyen Ads Library API. Can dung token tu tai khoan ca nhan DA CHAY QUANG CAO (co Ad Account). Xem huong dan o tab Cai dat")
                     raise ValueError(f"Facebook API loi {code}: {msg}")
                 ads = data.get("data", [])
                 result = [self._normalize_ad(a) for a in ads]

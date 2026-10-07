@@ -11,6 +11,17 @@ from app.analyzers.trend_scorer import score_facebook_ad, score_instagram_post
 
 router = APIRouter(prefix="/api/ads", tags=["Ads & Social"])
 
+_DEMO_FB_ADS = [
+    {"ad_id": "fb_demo_001", "page_name": "Váy Đầm Hàn Quốc – Korean Style VN", "ad_creative_body": "🌸 SALE SỐC! Váy đầm linen cổ V tay ngắn – form suông vintage cực xinh. Chất liệu cao cấp, mặc mát quanh năm. Giảm 40% hôm nay! Nhận hàng 2-3 ngày 🚚", "ad_creative_title": "Váy Đầm Linen Cổ V – Phong Cách Hàn Quốc", "spend_min": 5000, "spend_max": 10000, "impressions_min": 80000, "impressions_max": 150000, "delivery_start": "2024-10-01", "delivery_stop": None, "platforms": ["facebook", "instagram"], "trending_score": 0.87, "keywords": ["váy đầm", "hàn quốc", "linen", "sale", "vintage"], "price_inquiry_ratio": 0.35},
+    {"ad_id": "fb_demo_002", "page_name": "Son Môi ROMAND Việt Nam Official", "ad_creative_body": "💄 Son lì ROMAND Zero Gram Matte – lên màu chuẩn, không khô môi, bền 8 tiếng. #17 Beige Nude đang HOT nhất 2024. Order ngay hôm nay – free ship toàn quốc!", "ad_creative_title": "ROMAND Zero Gram Matte Lip – #17 HOT TREND", "spend_min": 8000, "spend_max": 15000, "impressions_min": 120000, "impressions_max": 200000, "delivery_start": "2024-09-15", "delivery_stop": None, "platforms": ["facebook", "instagram", "audience_network"], "trending_score": 0.92, "keywords": ["son môi", "romand", "matte", "beige", "hot trend"], "price_inquiry_ratio": 0.28},
+    {"ad_id": "fb_demo_003", "page_name": "Kem Chống Nắng ANESSA VN", "ad_creative_body": "☀️ ANESSA Perfect UV SPF50+ PA++++ – Bảo vệ da tối đa khỏi tia UV. Kiềm dầu, không bết dính. Bestseller Nhật Bản 15 năm liên tiếp. Mua 1 tặng 1 mini 20ml!", "ad_creative_title": "Kem Chống Nắng ANESSA – Chống UV Tối Đa SPF50+", "spend_min": 12000, "spend_max": 25000, "impressions_min": 200000, "impressions_max": 350000, "delivery_start": "2024-10-01", "delivery_stop": None, "platforms": ["facebook"], "trending_score": 0.89, "keywords": ["kem chống nắng", "anessa", "spf50", "nhật bản", "uv"], "price_inquiry_ratio": 0.22},
+    {"ad_id": "fb_demo_004", "page_name": "Túi Xách Nữ – BagStyle VN", "ad_creative_body": "👜 Túi tote canvas 2 ngăn tiện ích – đựng vừa laptop 15.6inch. 12 màu hot, chất canvas dày dặn không nhăn. Giá chỉ từ 95k – MIỄN SHIP đơn 200k 🎀", "ad_creative_title": "Túi Tote Canvas Cao Cấp – 12 Màu Hot 2024", "spend_min": 3000, "spend_max": 7000, "impressions_min": 50000, "impressions_max": 90000, "delivery_start": "2024-09-20", "delivery_stop": None, "platforms": ["facebook", "instagram"], "trending_score": 0.78, "keywords": ["túi tote", "canvas", "laptop", "miễn ship"], "price_inquiry_ratio": 0.41},
+    {"ad_id": "fb_demo_005", "page_name": "Serum Vitamin C – Klairs Việt Nam", "ad_creative_body": "✨ Klairs Freshly Juiced Vitamin C 5% – Sáng da, mờ thâm, chống oxy hóa. Phù hợp mọi loại da kể cả da nhạy cảm. 35ml dùng được 3-4 tháng. Combo 2 chai giảm 20%!", "ad_creative_title": "Serum Vitamin C Klairs – Sáng Da Mờ Thâm", "spend_min": 6000, "spend_max": 12000, "impressions_min": 90000, "impressions_max": 160000, "delivery_start": "2024-10-05", "delivery_stop": None, "platforms": ["facebook", "instagram"], "trending_score": 0.84, "keywords": ["serum", "vitamin c", "klairs", "sáng da", "mờ thâm"], "price_inquiry_ratio": 0.19},
+    {"ad_id": "fb_demo_006", "page_name": "Nồi Chiên Không Dầu Philips VN", "ad_creative_body": "🍗 Philips HD9252 4.1L – Chiên giòn không dầu, tiết kiệm 90% dầu ăn. Công nghệ Rapid Air lưu thông nhiệt đều. Bảo hành 2 năm. Đặt hôm nay giảm 500k + tặng sách nấu ăn!", "ad_creative_title": "Nồi Chiên Không Dầu Philips 4.1L – Giảm 500k", "spend_min": 15000, "spend_max": 30000, "impressions_min": 250000, "impressions_max": 400000, "delivery_start": "2024-09-01", "delivery_stop": None, "platforms": ["facebook"], "trending_score": 0.81, "keywords": ["nồi chiên không dầu", "philips", "bảo hành", "tiết kiệm dầu"], "price_inquiry_ratio": 0.15},
+    {"ad_id": "fb_demo_007", "page_name": "Thời Trang Nữ ZARA VN", "ad_creative_body": "👗 BST Thu Đông 2024 đã ra mắt! Áo khoác blazer oversize, quần jean ống rộng, váy midi – style công sở chuẩn Âu. Hàng về liên tục, size S-XL. Shop tại 45 Bà Triệu, HN & online!", "ad_creative_title": "ZARA Thu Đông 2024 – Thời Trang Công Sở Âu Mỹ", "spend_min": 20000, "spend_max": 40000, "impressions_min": 350000, "impressions_max": 600000, "delivery_start": "2024-10-01", "delivery_stop": None, "platforms": ["facebook", "instagram", "messenger"], "trending_score": 0.95, "keywords": ["zara", "thu đông", "blazer", "công sở", "hà nội"], "price_inquiry_ratio": 0.31},
+    {"ad_id": "fb_demo_008", "page_name": "Collagen Shiseido Official VN", "ad_creative_body": "💊 Collagen Shiseido Enriched 126 viên – Dùng 84 ngày thấy da căng mịn rõ rệt. Hàng chính hãng Nhật Bản nhập khẩu. Combo 2 hộp giảm 15% + tặng kem dưỡng mini!", "ad_creative_title": "Collagen Shiseido Nhật – 84 Ngày Da Căng Mịn", "spend_min": 10000, "spend_max": 20000, "impressions_min": 150000, "impressions_max": 250000, "delivery_start": "2024-09-10", "delivery_stop": None, "platforms": ["facebook", "instagram"], "trending_score": 0.86, "keywords": ["collagen", "shiseido", "nhật bản", "da căng mịn", "84 ngày"], "price_inquiry_ratio": 0.24},
+]
+
 
 @router.get("/facebook/trending")
 async def get_trending_fb_ads(db: AsyncSession = Depends(get_db), limit: int = Query(20, ge=1, le=100)):
@@ -29,10 +40,27 @@ async def search_facebook_ads(
     save: bool = Query(True),
 ):
     scraper = FacebookAdsScraper(token=fb_token)
+    api_error = None
+    ads = []
     try:
         ads = await scraper.search_ads(keyword, country=country, limit=50)
     except Exception as e:
-        return {"data": [], "keyword": keyword, "total": 0, "error": str(e)}
+        api_error = str(e)
+
+    # Fallback to demo data when API fails or returns empty
+    if not ads:
+        kw = keyword.lower()
+        demo = [a for a in _DEMO_FB_ADS if kw in (a.get("ad_creative_body") or "").lower() or kw in (a.get("ad_creative_title") or "").lower() or kw in " ".join(a.get("keywords") or [])]
+        if not demo:
+            demo = _DEMO_FB_ADS
+        return {
+            "keyword": keyword,
+            "data": demo,
+            "total": len(demo),
+            "demo": True,
+            "error": api_error,
+            "hint": "Dang hien thi du lieu DEMO. De xem du lieu that: vao tab Cai dat → huong dan lay Facebook Token co quyen ads_read",
+        }
 
     for ad in ads:
         body = ad.get("ad_creative_body") or ""

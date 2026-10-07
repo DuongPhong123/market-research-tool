@@ -662,6 +662,30 @@ select.sel-ui:focus { border-color: var(--accent); }
         <div style="margin-top:10px"><button class="btn btn-primary" onclick="saveKeywords()">💾 Lưu từ khóa</button></div>
       </div>
       <div class="analysis-card"><h4>Lịch sử crawl</h4><div id="crawlHistory" style="color:var(--fg3);font-size:13px">Đang tải...</div></div>
+      <div class="analysis-card" style="border-left:3px solid var(--amber)">
+        <h4 style="color:var(--amber)">📘 Hướng dẫn lấy Facebook Token thật</h4>
+        <div style="font-size:13px;color:var(--fg2);line-height:1.7;margin-top:10px">
+          <p style="margin:0 0 8px"><b>Lỗi code 10</b> = Facebook App chưa được cấp quyền Ads Library API.</p>
+          <p style="margin:0 0 6px"><b>Cách fix đơn giản nhất:</b></p>
+          <ol style="margin:0 0 10px;padding-left:20px">
+            <li>Vào <b>developers.facebook.com/tools/explorer</b></li>
+            <li>Chọn app hoặc tạo app mới (loại <b>Business</b>)</li>
+            <li>Click <b>Add a Permission</b> → tích vào <b>ads_read</b></li>
+            <li>Click <b>Generate Access Token</b></li>
+            <li>Copy token dán vào ô "Facebook Access Token" ở tab Facebook Ads</li>
+          </ol>
+          <p style="margin:0 0 6px"><b>Lưu ý quan trọng:</b></p>
+          <ul style="margin:0;padding-left:20px">
+            <li>Tài khoản Facebook phải <b>đã từng chạy quảng cáo</b> (có Ad Account)</li>
+            <li>Token từ <b>User</b> (không phải App token)</li>
+            <li>Token hết hạn sau ~2 giờ, cần lấy lại nếu bị lỗi 190/463</li>
+            <li>Nếu chưa có Ad Account: tạo tại <b>business.facebook.com</b></li>
+          </ul>
+          <div style="margin-top:12px;padding:8px 12px;background:var(--bg3);border-radius:6px;font-size:12px;color:var(--fg3)">
+            Hiện tại app đang hiển thị <b>dữ liệu DEMO</b> để anh xem trước giao diện. Khi có token thật, data sẽ tự động cập nhật.
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -941,7 +965,12 @@ async function searchFbAds() {
     const _fbt = getFbToken(); const _fbtParam = _fbt ? `&fb_token=${encodeURIComponent(_fbt)}` : '';
     const r = await fetch(`${API}/api/ads/facebook/search?keyword=${encodeURIComponent(kw)}&country=${country}${_fbtParam}`);
     const data = await r.json();
-    if (data.error) {
+    if (data.demo) {
+      renderFbAdsTable(data.data||[], true);
+      document.getElementById('fbAdCount').textContent = (data.total||0) + ' (demo)';
+      const hint = data.error ? `API loi: ${data.error}` : 'Hien thi du lieu DEMO';
+      showToast(`${hint} — Xem huong dan o tab Cai dat de lay token that`, 'info');
+    } else if (data.error && !(data.data||[]).length) {
       document.getElementById('fbAdsTable').innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title" style="color:var(--amber)">${data.error}</div></div></td></tr>`;
       showToast(data.error,'error');
     } else {
@@ -956,10 +985,11 @@ async function searchFbAds() {
   } finally { btn.disabled=false; btn.textContent='Tim quang cao'; }
 }
 
-function renderFbAdsTable(ads) {
+function renderFbAdsTable(ads, isDemo=false) {
   const tbody = document.getElementById('fbAdsTable');
   if (!ads.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><div class="empty-icon">📘</div><div class="empty-title">Khong tim thay quang cao</div></div></td></tr>'; return; }
-  tbody.innerHTML = ads.map(a => `<tr><td style="font-weight:600;min-width:120px">${a.page_name||'—'}</td><td style="max-width:300px;min-width:0"><div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.ad_creative_title||''}</div><div style="font-size:12px;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(a.ad_creative_body||'').substring(0,100)}</div></td><td class="mono">${a.spend_max?formatMoney(a.spend_max):'—'}</td><td>${(a.platforms||[]).map(p=>`<span class="platform ${p==='facebook'?'plt-facebook':'plt-instagram'}">${p==='facebook'?'FB':'IG'}</span>`).join(' ')}</td><td>${scoreBadge(a.trending_score)}</td><td><div class="tags">${(a.keywords||[]).slice(0,4).map(k=>`<span class="tag">${k}</span>`).join('')}</div></td></tr>`).join('');
+  const demoBanner = isDemo ? `<tr><td colspan="6" style="background:rgba(245,166,35,0.12);padding:8px 12px;font-size:12px;color:var(--amber);text-align:center">⚠️ DU LIEU DEMO — Facebook API chua duoc cap quyen. Xem huong dan o tab <b>Cai dat</b></td></tr>` : '';
+  tbody.innerHTML = demoBanner + ads.map(a => `<tr><td style="font-weight:600;min-width:120px">${a.page_name||'—'}</td><td style="max-width:300px;min-width:0"><div style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.ad_creative_title||''}</div><div style="font-size:12px;color:var(--fg2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(a.ad_creative_body||'').substring(0,100)}</div></td><td class="mono">${a.spend_max?formatMoney(a.spend_max):'—'}</td><td>${(a.platforms||[]).map(p=>`<span class="platform ${p==='facebook'?'plt-facebook':'plt-instagram'}">${p==='facebook'?'FB':'IG'}</span>`).join(' ')}</td><td>${scoreBadge(a.trending_score)}</td><td><div class="tags">${(a.keywords||[]).slice(0,4).map(k=>`<span class="tag">${k}</span>`).join('')}</div></td></tr>`).join('');
 }
 
 async function analyzeFbComments() {
